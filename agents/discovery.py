@@ -108,7 +108,6 @@ def create_discovery_agent() -> Agent:
             list_knowledge_files,
             read_knowledge_file,
         ],
-        output_schema=DiscoveryResult,
         instructions=DISCOVERY_INSTRUCTIONS,
         markdown=True,
         retries=2,

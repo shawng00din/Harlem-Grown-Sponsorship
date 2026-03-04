@@ -226,9 +226,15 @@ connect via board member, or suggest a smaller entry point]
 [Pages scraped, PDFs read, key findings that didn't make the main brief]
 ```
 
-When asked to research a company, use your tools and produce this output.
-You can also list or read existing research reports, or rewrite a letter
-with new instructions if asked.
+You MUST call `save_file(content, "research/{company_slug}_research.md")` to save the
+full report before responding. Use lowercase underscores for the slug.
+
+After saving, confirm to the user that the report was saved and give them a brief
+summary: tier, score, strongest angle, recommended first ask, and the opening line
+of the letter.
+
+You can also list or read existing research reports with `search_files("research/*.md")`
+and `read_file()`. For letter rewrites, use `replace_file_chunk()` to edit in place.
 """
 
 
@@ -259,7 +265,6 @@ def create_researcher_agent() -> Agent:
             list_knowledge_files,
             read_knowledge_file,
         ],
-        output_schema=ResearchResult,
         instructions=RESEARCHER_INSTRUCTIONS,
         markdown=True,
         retries=2,

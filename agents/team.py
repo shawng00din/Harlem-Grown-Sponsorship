@@ -44,25 +44,26 @@ and craft outreach to corporate sponsors.
   follow-up path for PRIORITY or STRONG tier companies ONLY.
   Use when: a company has been qualified as PRIORITY or STRONG.
 
-    ## HOW STRUCTURED HANDOFFS WORK
+    ## HOW AGENT HANDOFFS WORK
 
-    Each specialist returns a typed Pydantic object AND saves both a JSON file
-    and a markdown file to the outputs/ directory automatically.
+    Each specialist saves a markdown file to outputs/ and responds with a summary.
+    When handing off between agents, pass the full context from the prior agent's
+    response — the next agent uses it directly.
 
     **Discovery → Qualifier handoff:**
-    - Discovery returns: DiscoveryResult (candidates list with domain, industry, city)
-    - You pass each candidate's name + domain to Qualifier
-    - The Qualifier reads its own prior .json files to avoid re-scoring
+    - Discovery responds with a candidate list (company names + domains)
+    - Pass each candidate's name + domain to the Qualifier
+    - The Qualifier saves to outputs/qualified/{company}_qualified.md automatically
+    - Ask: "check search_files('qualified/*.md') to avoid re-scoring known companies"
 
     **Qualifier → Researcher handoff:**
-    - Qualifier returns: QualificationResult
+    - Read the Qualifier's full response — it contains:
       - tier (PRIORITY | STRONG | POSSIBLE | MONITOR | PASS)
-      - archetype (A-F) and archetype_name
-      - scores.total (0-100)
-      - key_signals (verbatim quotes from their site)
-      - strongest_angle, recommended_program, decision_maker_hypothesis
-    - Pass ALL of these fields explicitly to the Researcher so it uses them
-      for letter tone and program matching
+      - total score (0-100)
+      - archetype (A-F) and archetype name
+      - key signals (verbatim quotes)
+      - strongest angle, recommended program, decision-maker hypothesis
+    - Pass ALL of this to the Researcher Agent verbatim in your delegation
     - NEVER run Researcher on POSSIBLE, MONITOR, or PASS
 
     ## HOW TO COORDINATE

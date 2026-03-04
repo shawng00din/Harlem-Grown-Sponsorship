@@ -199,9 +199,10 @@ CSR mentions not covered by step 1. Use specific URLs like `https://wholefoodsma
 If `scrape_csr_pages()` returned nothing or very little, use `scrape_site(url)` which
 crawls links from the homepage filtered by CSR keywords. This is slower and less targeted.
 
-**Step 4 — Score and save:**
-Score each of the 10 dimensions based on what you found.
-Calculate total and assign tier + archetype.
+**Step 4 — Score, save file, then respond:**
+Score each of the 10 dimensions based on what you found. Calculate total and assign
+tier + archetype. Then ALWAYS call `save_file()` to save the markdown report before
+responding to the user — this is required, not optional.
 6. Use `save_file(content, "qualified/{company_slug}_qualified.md")` to save the
    markdown report (use lowercase with underscores for company_slug)
 7. Use `search_files("qualified/*.md")` to list existing qualification reports
@@ -218,23 +219,65 @@ Warburg Pincus, Hairstory, Mellon Foundation
 
 ---
 
-## OUTPUT FORMAT
+## OUTPUT FORMAT — ALWAYS SAVE A FILE FIRST
 
-Save a markdown file to `qualified/{company_slug}_qualified.md` with this structure:
+You MUST call `save_file(content, "qualified/{company_slug}_qualified.md")` before
+responding. Use lowercase underscores for the slug, e.g. "whole_foods_market".
+
+The file must contain:
 
 ```
 # Qualification Report — [Company Name]
-**Date:** [date] | **Tier:** [TIER] | **Score:** [N]/100 | **Archetype:** [X — Name]
-**Confidence:** HIGH/MEDIUM/LOW | **Go/No-Go:** GO/NO-GO
+**Date:** [date]
+**Website:** [url]
+**Tier:** PRIORITY | STRONG | POSSIBLE | MONITOR | PASS
+**Total Score:** [N]/100
+**Archetype:** [X] — [Archetype Name]
+**Confidence:** HIGH | MEDIUM | LOW
+**Go/No-Go:** GO | NO-GO
+
+---
 
 ## Score Breakdown
 | Dimension | Score | Evidence |
-...
+|-----------|-------|----------|
+| 1. Food & Nutrition Alignment | /10 | [quote from site] |
+| 2. Youth & Education Alignment | /10 | [quote or inference] |
+| 3. Environmental Sustainability | /10 | [quote or inference] |
+| 4. NYC / Harlem Proximity | /10 | [HQ location, office size] |
+| 5. Employee Volunteer Appetite | /10 | [VTO policy, volunteer programs] |
+| 6. Giving Capacity | /10 | [revenue/size proxy] |
+| 7. ESG Values Language Match | /10 | [specific language echoing HG] |
+| 8. Decision-Maker Accessibility | /10 | [contact found or not] |
+| 9. Sector Narrative Fit | /10 | [sector] |
+| 10. Partnership Longevity Potential | /10 | [giving history] |
+| **TOTAL** | **/100** | |
 
-## Key Signals | Strongest Angle | Biggest Gap | Recommended Program | First Ask
+---
+
+## Key Signals
+[3-5 verbatim quotes from their site that show alignment]
+
+## Strongest Pitch Angle
+[Single most compelling hook for HG to lead with]
+
+## Biggest Gap
+[Weakest dimension — what's missing or unclear]
+
+## Recommended HG Program
+[Which program to lead with for this company]
+
+## Decision-Maker Hypothesis
+[Who probably owns this decision and why]
+
+## Recommended First Ask
+[site_visit | volunteer_day | program_sponsor — and why]
+
+## Pages Scraped
+[List every URL you visited]
 ```
 
-Then return your structured QualificationResult.
+After saving the file, summarize the results to the user in a concise markdown response.
 """
 
 
@@ -263,7 +306,6 @@ def create_qualifier_agent() -> Agent:
             list_knowledge_files,
             read_knowledge_file,
         ],
-        output_schema=QualificationResult,
         instructions=QUALIFIER_INSTRUCTIONS,
         markdown=True,
         retries=2,

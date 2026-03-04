@@ -78,7 +78,9 @@ harlem-grown/
 │   └── sponsor_criteria_framework.md   # The scoring bible — 10 dims + archetypes
 ├── seed/
 │   └── curated_seed_list.json  # ~100 NYC companies fallback
-├── test_agents.py              # Programmatic test runner via AgentOS REST API
+├── scripts/
+│   ├── chat.py                 # Terminal chat interface (no browser needed)
+│   └── test_agents.py          # Programmatic test runner via AgentOS REST API
 └── .env.example                # Environment variable template
 ```
 
@@ -164,12 +166,12 @@ curl -X POST http://localhost:7777/teams/prospect-team/runs \
 
 ```bash
 # Run default tests (discovery + qualifier + partner guard)
-uv run python test_agents.py
+uv run python scripts/test_agents.py
 
 # Run specific tests
-uv run python test_agents.py qualifier
-uv run python test_agents.py team
-uv run python test_agents.py pipeline   # full end-to-end (slow)
+uv run python scripts/test_agents.py qualifier
+uv run python scripts/test_agents.py team
+uv run python scripts/test_agents.py pipeline   # full end-to-end (slow)
 ```
 
 ---

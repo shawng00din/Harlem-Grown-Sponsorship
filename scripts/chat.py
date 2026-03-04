@@ -10,6 +10,9 @@ Pick an agent from the menu, then chat with it. Type 'exit' to quit,
 import sys
 from pathlib import Path
 
+# Allow imports from project root when run from scripts/
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 
 def ensure_output_dirs():
     for d in ["outputs/discovery", "outputs/qualified", "outputs/research", "outputs/pdfs"]:

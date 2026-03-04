@@ -18,10 +18,11 @@ WHAT'S AVAILABLE IN THE UI:
     Qualifier Agent  — score a specific company
     Researcher Agent — write the outreach brief + letter
 
-MEMORY & LEARNING:
+MEMORY, LEARNING & TRACING:
   All agents and the team share hg_memory.db (SQLite).
   Conversations, user preferences, and learned patterns persist across sessions.
   learning=True means agents automatically capture what works and improve over time.
+  Tracing via OpenTelemetry → DatabaseSpanExporter → visible in AgentOS UI traces tab.
 """
 from pathlib import Path
 
@@ -30,7 +31,9 @@ load_dotenv()
 
 import anthropic
 import logging
+from agno.db.sqlite import SqliteDb
 from agno.os import AgentOS
+from agno.tracing import setup_tracing
 
 from agents.discovery import create_discovery_agent
 from agents.qualifier import create_qualifier_agent
@@ -41,6 +44,13 @@ logger = logging.getLogger(__name__)
 
 for _d in ["outputs/discovery", "outputs/qualified", "outputs/research", "outputs/pdfs"]:
     Path(_d).mkdir(parents=True, exist_ok=True)
+
+# Shared SQLite db — memory, sessions, and traces all in one file
+db = SqliteDb(db_file="hg_memory.db")
+
+# Enable OpenTelemetry tracing → stored in hg_memory.db → visible in AgentOS UI
+setup_tracing(db=db)
+logger.info("✓ Agno tracing enabled → hg_memory.db")
 
 # Validate Anthropic key on startup
 try:

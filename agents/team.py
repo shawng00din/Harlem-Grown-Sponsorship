@@ -121,6 +121,19 @@ and craft outreach to corporate sponsors.
     3. After research completes, confirm the file was saved and give the opening
        line of the letter so they know it's ready
 
+    ## SESSION STATE — track pipeline progress automatically
+
+    The session state is shared across all agents. Update it as you work:
+
+    - When a company is qualified, add to `qualified_companies`:
+      {"name": "Patagonia", "score": 65, "tier": "STRONG", "archetype": "D"}
+    - When a company is researched, add its name to `researched_companies`
+    - Use `qualified_companies` to avoid re-qualifying a company already scored
+    - Use `researched_companies` to avoid re-running research unnecessarily
+
+    You can reference the session state with {qualified_companies} and
+    {researched_companies} to see what's been done in this session.
+
     ## IMPORTANT RULES
 
     - NEVER run the Researcher Agent without explicit user confirmation.
@@ -157,10 +170,21 @@ def create_prospect_team() -> Team:
             create_researcher_agent(),
         ],
         db=db,
+        # Memory & learning
         learning=True,
         add_history_to_context=True,
         num_history_runs=10,
         update_memory_on_run=True,
+        # Tracing & visibility — member responses appear in AgentOS traces
+        share_member_interactions=True,
+        # Session state — tracks pipeline progress within a conversation
+        session_state={
+            "qualified_companies": [],   # [{name, score, tier, archetype}]
+            "researched_companies": [],  # [company_name]
+            "current_batch": None,       # discovery job in progress
+        },
+        add_session_state_to_context=True,
+        enable_agentic_state=True,
         instructions=TEAM_INSTRUCTIONS,
         markdown=True,
         description=(

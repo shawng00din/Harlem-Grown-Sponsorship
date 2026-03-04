@@ -1,0 +1,36 @@
+# Environment & secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Agent memory & sessions (SQLite — regenerated at runtime)
+hg_memory.db
+*.db
+
+# Generated outputs (runtime artifacts — not source code)
+outputs/
+
+# PDF downloads
+backend/storage/
+
+# Node
+node_modules/
+.next/
+
+# IDE
+.DS_Store
+.cursor/
+
+# Logs
+*.log

@@ -16,7 +16,7 @@ from agno.models.anthropic import Claude
 from agno.tools.file import FileTools
 
 from models.schemas import ResearchResult
-from tools.scraper import scrape_page, scrape_site
+from tools.scraper import scrape_page, scrape_csr_pages, scrape_site
 from tools.kb_tools import list_knowledge_files, read_knowledge_file
 
 
@@ -147,9 +147,11 @@ evidence they respond to cold financial asks (very rare).
 9. `read_knowledge_file("sponsorship_tiers.md")` — tier ask guidance
 
 **Research tools:**
-10. `scrape_page(url)` — read a specific page
-11. `scrape_site(url)` — crawl multiple pages of a site
-12. `extract_pdf_from_url(url)` — download and read an ESG PDF
+10. `scrape_csr_pages(domain)` — ALWAYS start here. Targets CSR/ESG paths directly.
+    Pass the bare domain e.g. "goldmansachs.com". Skips recipes, products, store pages.
+11. `scrape_page(url)` — read one specific page by full URL
+12. `scrape_site(url)` — last resort: crawls homepage links filtered by CSR keywords
+13. `extract_pdf_from_url(url)` — download and read an ESG/sustainability PDF
 
 Then return your structured ResearchResult.
 
@@ -249,6 +251,7 @@ def create_researcher_agent() -> Agent:
         num_history_runs=5,
         update_memory_on_run=True,
         tools=[
+            scrape_csr_pages,
             scrape_page,
             scrape_site,
             extract_pdf_from_url,

@@ -14,7 +14,7 @@ from agno.models.anthropic import Claude
 from agno.tools.file import FileTools
 
 from models.schemas import QualificationResult
-from tools.scraper import scrape_page, scrape_site
+from tools.scraper import scrape_page, scrape_csr_pages, scrape_site
 from tools.kb_tools import list_knowledge_files, read_knowledge_file
 
 QUALIFIER_INSTRUCTIONS = """
@@ -185,11 +185,23 @@ Identify which archetype fits and note the best lead angle:
 
 ## HOW TO QUALIFY A COMPANY
 
-1. Use `scrape_page()` on their homepage, about page, CSR/sustainability page
-2. Try common CSR URL paths: /sustainability /responsibility /csr /esg /community /impact /foundation
-3. Use `scrape_site()` if content seems spread across pages
-4. Score each of the 10 dimensions based on what you find
-5. Calculate total and assign tier + archetype
+**Step 1 — Target CSR pages directly (always start here):**
+Use `scrape_csr_pages(domain)` first. Pass just the domain, e.g. `"wholefoodsmarket.com"`.
+This tries /sustainability, /responsibility, /csr, /esg, /community, /impact, /foundation,
+and similar paths automatically — returning only pages that have real content.
+This avoids irrelevant pages like recipes, products, and store locators.
+
+**Step 2 — Read the homepage if needed:**
+Use `scrape_page(url)` on the homepage to pick up mission/values language and any
+CSR mentions not covered by step 1. Use specific URLs like `https://wholefoodsmarket.com/`.
+
+**Step 3 — Only use `scrape_site()` as a last resort:**
+If `scrape_csr_pages()` returned nothing or very little, use `scrape_site(url)` which
+crawls links from the homepage filtered by CSR keywords. This is slower and less targeted.
+
+**Step 4 — Score and save:**
+Score each of the 10 dimensions based on what you found.
+Calculate total and assign tier + archetype.
 6. Use `save_file(content, "qualified/{company_slug}_qualified.md")` to save the
    markdown report (use lowercase with underscores for company_slug)
 7. Use `search_files("qualified/*.md")` to list existing qualification reports
@@ -244,6 +256,7 @@ def create_qualifier_agent() -> Agent:
         num_history_runs=5,
         update_memory_on_run=True,
         tools=[
+            scrape_csr_pages,
             scrape_page,
             scrape_site,
             outputs_tools,

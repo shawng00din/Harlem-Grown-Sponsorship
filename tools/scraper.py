@@ -1,10 +1,87 @@
 """
 Crawl4AI wrappers for scraping company websites.
 All functions are wrapped in try/except — scraping failures are never fatal.
+
+Before scraping, functions check for existing reports in the outputs/ directory
+using fuzzy filename matching. If a qualified or research report already exists
+for a company, the cached version is returned instead of hitting the website.
 """
 import logging
+import re
+from pathlib import Path
+from difflib import SequenceMatcher
 
 logger = logging.getLogger(__name__)
+
+# Directories to search for cached company reports (relative to project root)
+_OUTPUT_DIRS = ["outputs/qualified", "outputs/research"]
+
+
+def _domain_to_slug(url: str) -> str:
+    """Extract a normalised slug from a URL or domain string."""
+    # Strip scheme and www
+    slug = re.sub(r"^https?://", "", url.lower())
+    slug = re.sub(r"^www\.", "", slug)
+    # Keep only the domain part (drop path)
+    slug = slug.split("/")[0]
+    # Drop TLD and convert separators to spaces for matching
+    slug = re.sub(r"\.(com|org|net|co|io|gov|edu)$", "", slug)
+    slug = re.sub(r"[-_.]", " ", slug).strip()
+    return slug
+
+
+def _fuzzy_score(a: str, b: str) -> float:
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def find_existing_report(company_url_or_name: str, threshold: float = 0.6) -> str:
+    """
+    Search outputs/qualified/ and outputs/research/ for an existing markdown
+    report for this company. Uses fuzzy filename matching so slight name
+    variations (e.g. 'jpmorgan' vs 'jp_morgan_chase') still resolve.
+
+    Returns the file contents prefixed with a cache-hit banner if found,
+    otherwise returns an empty string.
+    """
+    query_slug = _domain_to_slug(company_url_or_name)
+    if not query_slug:
+        return ""
+
+    project_root = Path(__file__).parent.parent
+    candidates: list[tuple[float, Path]] = []
+
+    for dir_name in _OUTPUT_DIRS:
+        output_dir = project_root / dir_name
+        if not output_dir.exists():
+            continue
+        for md_file in output_dir.glob("*.md"):
+            # Normalise the filename the same way
+            file_slug = re.sub(r"[-_]", " ", md_file.stem)
+            # Remove trailing stage suffixes (_qualified, _research)
+            file_slug = re.sub(r"\s*(qualified|research)$", "", file_slug).strip()
+            score = _fuzzy_score(query_slug, file_slug)
+            if score >= threshold:
+                candidates.append((score, md_file))
+
+    if not candidates:
+        return ""
+
+    best_score, best_file = max(candidates, key=lambda t: t[0])
+    try:
+        content = best_file.read_text(encoding="utf-8")
+        logger.info(
+            f"find_existing_report: cache hit for '{query_slug}' → {best_file.name} "
+            f"(score={best_score:.2f})"
+        )
+        return (
+            f"> **[CACHED REPORT — {best_file.parent.name}/{best_file.name}]**  \n"
+            f"> Loaded from existing output instead of re-scraping. "
+            f"Match score: {best_score:.0%}\n\n"
+            + content
+        )
+    except Exception as e:
+        logger.warning(f"find_existing_report: could not read {best_file}: {e}")
+        return ""
 
 # Paths that signal CSR/ESG content
 CSR_KEYWORDS = [
@@ -80,10 +157,20 @@ async def scrape_csr_pages(domain: str, max_pages: int = 4) -> str:
     sustainability, responsibility, community, and foundation pages without crawling
     irrelevant pages like recipes, products, or store locators.
 
+    IMPORTANT: Before scraping, this function checks outputs/qualified/ and
+    outputs/research/ for an existing report on this company. If one is found
+    (fuzzy name match ≥ 60%), the cached report is returned immediately — no
+    web request is made. This prevents redundant scraping.
+
     Pass the bare domain, e.g. "wholefoodsmarket.com" or "goldmansachs.com".
     Returns concatenated markdown from all pages that returned content.
     Returns empty string if nothing found — never raises.
     """
+    # Check for an existing report before hitting the web
+    cached = find_existing_report(domain)
+    if cached:
+        return cached
+
     try:
         base = domain.rstrip("/")
         if not base.startswith("http"):

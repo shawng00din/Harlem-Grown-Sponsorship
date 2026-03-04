@@ -14,7 +14,7 @@ from agno.models.anthropic import Claude
 from agno.tools.file import FileTools
 
 from models.schemas import QualificationResult
-from tools.scraper import scrape_page, scrape_csr_pages, scrape_site
+from tools.scraper import scrape_page, scrape_csr_pages, scrape_site, find_existing_report
 from tools.kb_tools import list_knowledge_files, read_knowledge_file
 
 QUALIFIER_INSTRUCTIONS = """
@@ -185,21 +185,27 @@ Identify which archetype fits and note the best lead angle:
 
 ## HOW TO QUALIFY A COMPANY
 
-**Step 1 — Target CSR pages directly (always start here):**
+**Step 1 — Check for an existing report first (always do this before scraping):**
+Call `find_existing_report(domain_or_url)` before any scraping. If a qualified or
+research report already exists for this company, it will be returned immediately —
+no web request needed. This avoids redundant scraping and speeds up re-qualification.
+If this returns content, use it as your primary source. Skip steps 2–3.
+
+**Step 2 — Target CSR pages directly (if no cached report):**
 Use `scrape_csr_pages(domain)` first. Pass just the domain, e.g. `"wholefoodsmarket.com"`.
 This tries /sustainability, /responsibility, /csr, /esg, /community, /impact, /foundation,
 and similar paths automatically — returning only pages that have real content.
 This avoids irrelevant pages like recipes, products, and store locators.
 
-**Step 2 — Read the homepage if needed:**
+**Step 3 — Read the homepage if needed:**
 Use `scrape_page(url)` on the homepage to pick up mission/values language and any
-CSR mentions not covered by step 1. Use specific URLs like `https://wholefoodsmarket.com/`.
+CSR mentions not covered by step 2. Use specific URLs like `https://wholefoodsmarket.com/`.
 
-**Step 3 — Only use `scrape_site()` as a last resort:**
+**Step 4 — Only use `scrape_site()` as a last resort:**
 If `scrape_csr_pages()` returned nothing or very little, use `scrape_site(url)` which
 crawls links from the homepage filtered by CSR keywords. This is slower and less targeted.
 
-**Step 4 — Score, save file, then respond:**
+**Step 5 — Score, save file, then respond:**
 Score each of the 10 dimensions based on what you found. Calculate total and assign
 tier + archetype. Then ALWAYS call `save_file()` to save the markdown report before
 responding to the user — this is required, not optional.
@@ -299,6 +305,7 @@ def create_qualifier_agent() -> Agent:
         num_history_runs=5,
         update_memory_on_run=True,
         tools=[
+            find_existing_report,
             scrape_csr_pages,
             scrape_page,
             scrape_site,

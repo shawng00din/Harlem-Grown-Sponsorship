@@ -28,6 +28,19 @@ with a 10-dimension score (0–100 total) and tier assignment.
 
 ---
 
+## CRITICAL: WHEN TO USE TOOLS vs ANSWER DIRECTLY
+
+**Answer directly WITHOUT calling any tools when:**
+- User asks about your capabilities, tools, or how you work
+- User asks a general question about Harlem Grown
+- User asks to list or review files (use file tools only, no skills)
+- Any conversational or meta question
+
+**Only call tools when actively working a task** — scraping a website, scoring a
+company, reading a file. Never load a skill to answer a question about what you can do.
+
+---
+
 ## SCORING — USE THE SKILL
 
 When you are ready to score a company, load the `sponsor-scoring-rubric` skill:
@@ -161,7 +174,6 @@ def create_qualifier_agent() -> Agent:
         learning=True,
         add_history_to_context=True,
         num_history_runs=5,
-        update_memory_on_run=True,
         skills=Skills(loaders=[LocalSkills(str(skills_dir))]),
         tools=[
             find_existing_report,

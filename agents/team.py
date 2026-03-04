@@ -176,7 +176,6 @@ def create_prospect_team() -> Team:
         learning=True,
         add_history_to_context=True,
         num_history_runs=10,
-        update_memory_on_run=True,
         # Tracing & visibility — member responses appear in AgentOS traces
         share_member_interactions=True,
         # Session state — tracks pipeline progress within a conversation

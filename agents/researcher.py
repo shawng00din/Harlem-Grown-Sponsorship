@@ -258,7 +258,6 @@ def create_researcher_agent() -> Agent:
         learning=True,
         add_history_to_context=True,
         num_history_runs=5,
-        update_memory_on_run=True,
         tools=[
             find_existing_report,
             scrape_csr_pages,

@@ -15,6 +15,7 @@ from agno.db.sqlite import SqliteDb
 from agno.models.anthropic import Claude
 from agno.tools.file import FileTools
 
+from config import settings
 from models.schemas import ResearchResult
 from tools.scraper import scrape_page, scrape_csr_pages, scrape_site, find_existing_report
 from tools.kb_tools import list_knowledge_files, read_knowledge_file

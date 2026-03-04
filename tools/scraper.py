@@ -110,9 +110,17 @@ IRRELEVANT_PATH_FRAGMENTS = [
 ]
 
 
+# Maximum characters returned per scraped page — keeps token costs predictable.
+# At ~4 chars/token, 8000 chars ≈ 2000 tokens. Enough for any CSR summary.
+_MAX_PAGE_CHARS = 8_000
+
+# Maximum total characters returned by scrape_csr_pages across all pages.
+_MAX_TOTAL_CHARS = 24_000
+
+
 async def scrape_page(url: str, _retries: int = 1) -> str:
     """
-    Scrape a single URL and return clean markdown text.
+    Scrape a single URL and return clean markdown text (capped at 8,000 chars).
     Use this to read a company's homepage, about page, or CSR/sustainability page.
     Retries once on failure (handles Playwright navigation race conditions).
     Returns empty string if both attempts fail — never raises.
@@ -134,8 +142,10 @@ async def scrape_page(url: str, _retries: int = 1) -> str:
                 if result.success:
                     content = getattr(result, "markdown_v2", None)
                     if content:
-                        return getattr(content, "fit_markdown", None) or str(content)
-                    return result.markdown or ""
+                        text = getattr(content, "fit_markdown", None) or str(content)
+                    else:
+                        text = result.markdown or ""
+                    return text[:_MAX_PAGE_CHARS]
                 if attempt < _retries:
                     logger.info(f"Retrying {url} (attempt {attempt + 2}/{1 + _retries})")
                     await asyncio.sleep(2)
@@ -177,16 +187,19 @@ async def scrape_csr_pages(domain: str, max_pages: int = 4) -> str:
             base = f"https://{base}"
 
         found = []
+        total_chars = 0
         for path in CSR_URL_PATHS:
-            if len(found) >= max_pages:
+            if len(found) >= max_pages or total_chars >= _MAX_TOTAL_CHARS:
                 break
             url = base + path
             content = await scrape_page(url)
             if len(content) > 300:
                 found.append(f"### Page: {url}\n\n{content}")
-                logger.info(f"scrape_csr_pages: found content at {url}")
+                total_chars += len(content)
+                logger.info(f"scrape_csr_pages: found content at {url} ({len(content)} chars)")
 
-        return "\n\n---\n\n".join(found)
+        combined = "\n\n---\n\n".join(found)
+        return combined[:_MAX_TOTAL_CHARS]
     except Exception as e:
         logger.warning(f"scrape_csr_pages error for {domain}: {e}")
         return ""

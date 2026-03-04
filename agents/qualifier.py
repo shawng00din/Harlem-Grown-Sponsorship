@@ -14,6 +14,7 @@ from agno.models.anthropic import Claude
 from agno.skills import Skills, LocalSkills
 from agno.tools.file import FileTools
 
+from config import settings
 from models.schemas import QualificationResult
 from tools.scraper import scrape_page, scrape_csr_pages, scrape_site, find_existing_report
 from tools.kb_tools import list_knowledge_files, read_knowledge_file
@@ -171,9 +172,9 @@ def create_qualifier_agent() -> Agent:
         role="Scores corporate prospects on 10 dimensions (0-100), assigns tier (PRIORITY/STRONG/POSSIBLE/MONITOR/PASS) and archetype (A-F)",
         model=Claude(id="claude-haiku-4-5-20251001"),
         db=SqliteDb(db_file="hg_memory.db"),
-        learning=True,
+        learning=settings.ENABLE_LEARNING,
         add_history_to_context=True,
-        num_history_runs=5,
+        num_history_runs=2,
         skills=Skills(loaders=[LocalSkills(str(skills_dir))]),
         tools=[
             find_existing_report,
@@ -186,7 +187,7 @@ def create_qualifier_agent() -> Agent:
         ],
         instructions=QUALIFIER_INSTRUCTIONS,
         markdown=True,
-        retries=2,
+        retries=1,
         description=(
             "Scores corporate prospects on 10 dimensions (0-100) using the Harlem Grown "
             "sponsor criteria framework. Assigns tier (PRIORITY/STRONG/POSSIBLE/MONITOR/PASS) "

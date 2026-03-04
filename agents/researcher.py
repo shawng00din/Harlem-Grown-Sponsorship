@@ -255,9 +255,9 @@ def create_researcher_agent() -> Agent:
         role="Deep-researches PRIORITY and STRONG tier companies to produce a personalized outreach brief, introduction letter, and follow-up path",
         model=Claude(id="claude-sonnet-4-5-20250929"),
         db=SqliteDb(db_file="hg_memory.db"),
-        learning=True,
+        learning=settings.ENABLE_LEARNING,
         add_history_to_context=True,
-        num_history_runs=5,
+        num_history_runs=2,
         tools=[
             find_existing_report,
             scrape_csr_pages,
@@ -270,7 +270,7 @@ def create_researcher_agent() -> Agent:
         ],
         instructions=RESEARCHER_INSTRUCTIONS,
         markdown=True,
-        retries=2,
+        retries=1,
         description=(
             "Deep-researches PRIORITY and STRONG tier companies. Finds the right "
             "contact, matches HG programs/stories to their values, and writes a "

@@ -20,6 +20,7 @@ from agno.models.anthropic import Claude
 from agno.team import Team
 from agno.team.mode import TeamMode
 
+from config import settings
 from agents.discovery import create_discovery_agent
 from agents.qualifier import create_qualifier_agent
 from agents.researcher import create_researcher_agent
@@ -165,7 +166,7 @@ def create_prospect_team() -> Team:
         name="Prospect Intelligence Team",
         id="prospect-team",
         mode=TeamMode.coordinate,
-        model=Claude(id="claude-sonnet-4-5-20250929"),
+        model=Claude(id="claude-haiku-4-5-20251001"),
         members=[
             create_discovery_agent(),
             create_qualifier_agent(),
@@ -173,9 +174,9 @@ def create_prospect_team() -> Team:
         ],
         db=db,
         # Memory & learning
-        learning=True,
+        learning=settings.ENABLE_LEARNING,
         add_history_to_context=True,
-        num_history_runs=10,
+        num_history_runs=3,
         # Tracing & visibility — member responses appear in AgentOS traces
         share_member_interactions=True,
         # Session state — tracks pipeline progress within a conversation

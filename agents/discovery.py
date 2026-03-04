@@ -13,6 +13,7 @@ from agno.agent import Agent
 from agno.db.sqlite import SqliteDb
 from agno.models.anthropic import Claude
 from agno.tools.file import FileTools
+from config import settings
 
 from models.schemas import DiscoveryResult
 from tools.companies_api import search_companies, get_company_details
@@ -135,9 +136,9 @@ def create_discovery_agent() -> Agent:
         role="Finds candidate NYC companies for Harlem Grown sponsorship using company databases and sector filters",
         model=Claude(id="claude-haiku-4-5-20251001"),
         db=SqliteDb(db_file="hg_memory.db"),
-        learning=True,
+        learning=settings.ENABLE_LEARNING,
         add_history_to_context=True,
-        num_history_runs=5,
+        num_history_runs=2,
         tools=[
             search_companies,
             get_company_details,
@@ -147,7 +148,7 @@ def create_discovery_agent() -> Agent:
         ],
         instructions=DISCOVERY_INSTRUCTIONS,
         markdown=True,
-        retries=2,
+        retries=1,
         description=(
             "Finds candidate NYC companies for Harlem Grown sponsorship outreach "
             "using The Companies API and curated sector filters."

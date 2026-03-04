@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     DOUBLE_THE_DONATION_API_KEY: str = ""
     DOUBLE_THE_DONATION_BASE_URL: str = "https://doublethedonation.com/api/v2"
 
+    # Set to true only in production — each run triggers an extra LLM call
+    # to extract and store conversation learnings. Keep false during development.
+    ENABLE_LEARNING: bool = False
+
     OUTPUTS_DIR: str = "./outputs"
     KNOWLEDGE_BASE_DIR: str = "./knowledge_base"
     SEED_LIST_PATH: str = "./seed/curated_seed_list.json"

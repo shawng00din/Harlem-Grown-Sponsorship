@@ -51,10 +51,12 @@ and craft outreach to corporate sponsors.
     response — the next agent uses it directly.
 
     **Discovery → Qualifier handoff:**
-    - Discovery responds with a candidate list (company names + domains)
-    - Pass each candidate's name + domain to the Qualifier
+    - Discovery responds with a candidate list sorted by signal count (NOT tier)
+    - Tiers (PRIORITY/STRONG/etc.) do NOT exist yet at this stage — Discovery only
+      counts signals (1-6). Do not present discovery signal scores as tier scores.
+    - Show the user the candidates ordered by signal count and ask which to qualify
+    - Pass each confirmed candidate's name + domain to the Qualifier for real scoring
     - The Qualifier saves to outputs/qualified/{company}_qualified.md automatically
-    - Ask: "check search_files('qualified/*.md') to avoid re-scoring known companies"
 
     **Qualifier → Researcher handoff:**
     - Read the Qualifier's full response — it contains:

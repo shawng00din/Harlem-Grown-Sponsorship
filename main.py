@@ -49,8 +49,13 @@ for _d in ["outputs/discovery", "outputs/qualified", "outputs/research", "output
 db = SqliteDb(db_file="hg_memory.db")
 
 # Enable OpenTelemetry tracing → stored in hg_memory.db → visible in AgentOS UI
-setup_tracing(db=db)
-logger.info("✓ Agno tracing enabled → hg_memory.db")
+# Wrapped in try/except because uvicorn reload worker subprocesses can fail to
+# find OpenTelemetry packages before the venv is fully initialised in their context.
+try:
+    setup_tracing(db=db)
+    logger.info("✓ Agno tracing enabled → hg_memory.db")
+except (ImportError, Exception) as e:
+    logger.warning(f"Tracing not available ({e.__class__.__name__}) — runs continue without traces")
 
 # Validate Anthropic key on startup
 try:

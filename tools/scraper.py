@@ -33,33 +33,44 @@ IRRELEVANT_PATH_FRAGMENTS = [
 ]
 
 
-async def scrape_page(url: str) -> str:
+async def scrape_page(url: str, _retries: int = 1) -> str:
     """
     Scrape a single URL and return clean markdown text.
     Use this to read a company's homepage, about page, or CSR/sustainability page.
-    Returns empty string on failure — never raises.
+    Retries once on failure (handles Playwright navigation race conditions).
+    Returns empty string if both attempts fail — never raises.
     """
-    try:
-        from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode
+    import asyncio
 
-        config = CrawlerRunConfig(
-            cache_mode=CacheMode.ENABLED,
-            word_count_threshold=50,
-            remove_overlay_elements=True,
-            process_iframes=False,
-        )
-        async with AsyncWebCrawler(headless=True) as crawler:
-            result = await crawler.arun(url=url, config=config)
-            if result.success:
-                content = getattr(result, "markdown_v2", None)
-                if content:
-                    return getattr(content, "fit_markdown", None) or str(content)
-                return result.markdown or ""
-            logger.warning(f"Scrape failed for {url}: {result.error_message}")
-            return ""
-    except Exception as e:
-        logger.warning(f"scrape_page error for {url}: {e}")
-        return ""
+    for attempt in range(1 + _retries):
+        try:
+            from crawl4ai import AsyncWebCrawler, CrawlerRunConfig, CacheMode
+
+            config = CrawlerRunConfig(
+                cache_mode=CacheMode.ENABLED,
+                word_count_threshold=50,
+                remove_overlay_elements=True,
+                process_iframes=False,
+            )
+            async with AsyncWebCrawler(headless=True) as crawler:
+                result = await crawler.arun(url=url, config=config)
+                if result.success:
+                    content = getattr(result, "markdown_v2", None)
+                    if content:
+                        return getattr(content, "fit_markdown", None) or str(content)
+                    return result.markdown or ""
+                if attempt < _retries:
+                    logger.info(f"Retrying {url} (attempt {attempt + 2}/{1 + _retries})")
+                    await asyncio.sleep(2)
+                else:
+                    logger.warning(f"Scrape failed for {url}: {result.error_message}")
+        except Exception as e:
+            if attempt < _retries:
+                logger.info(f"Retrying {url} after error: {e}")
+                await asyncio.sleep(2)
+            else:
+                logger.warning(f"scrape_page error for {url}: {e}")
+    return ""
 
 
 async def scrape_csr_pages(domain: str, max_pages: int = 4) -> str:
